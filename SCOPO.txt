@@ -1,0 +1,268 @@
+# 1) Decisão de arquitetura (a que mais funciona no mundo real)
+Recomendo: Feature-first + Clean-ish (3 camadas)
+Cada feature tem:
+presentation (telas, widgets, controllers)
+domain (entidades, casos de uso, regras)
+data (repos, datasources Firebase, DTOs)
+
+Isso evita:
+“pasta screens gigante”
+“services virando Deus”
+“qualquer tela mexendo no Firestore”
+
+# 2) Estrutura de pastas (padrão recomendado)
+lib/
+  app/
+    app.dart
+    bootstrap.dart
+    router.dart
+    theme/
+    localization/
+  core/
+    config/
+      env.dart
+      flavors.dart
+    constants/
+    errors/
+      app_exception.dart
+      failure.dart
+    logging/
+    utils/
+    widgets/
+  features/
+    auth/
+      data/
+      domain/
+      presentation/
+    onboarding/
+      presentation/
+    home/
+      presentation/
+    partners/
+      data/
+      domain/
+      presentation/
+    purchases/
+      data/
+      domain/
+      presentation/
+    ledger/
+      data/
+      domain/
+      presentation/
+    rewards/
+      data/
+      domain/
+      presentation/
+    profile/
+      presentation/
+    admin/
+      data/
+      domain/
+      presentation/
+    partner_portal/
+      data/
+      domain/
+      presentation/
+  services/
+    firebase/
+      firebase_init.dart
+      firestore_refs.dart
+      storage_service.dart
+      functions_service.dart
+      auth_service.dart
+  main.dart
+  main_dev.dart
+  main_prod.dart
+
+Por que admin/ e partner_portal/ dentro do mesmo repo?
+Porque você já vai fazer FullStack e o Flutter Web serve muito bem para esses painéis.
+Mas: você controla por rotas + role e pode separar build com flavors.
+
+# 3) Padrões de nome e organização
+
+Pastas e arquivos: snake_case
+Classes: PascalCase
+Providers/controllers: *_controller.dart
+Telas: *_page.dart
+Widgets menores: *_widget.dart
+Models do domínio: entities/
+Models de Firestore: dtos/ (ou models/ na data layer)
+
+4) Stack de dependências (profissional e padrão)
+
+Estado + DI
+riverpod / flutter_riverpod
+(opcional) riverpod_annotation + build_runner
+
+Rotas
+go_router (com redirect por auth/role)
+Models e JSON
+freezed + json_serializable
+equatable (se não usar freezed)
+
+Firebase
+firebase_core
+firebase_auth
+cloud_firestore
+firebase_storage
+cloud_functions
+
+UX / Utilitários
+intl
+flutter_form_builder ou validação manual
+image_picker + compressão (flutter_image_compress)
+file_picker para PDF
+cached_network_image (para logos/itens)
+
+5) Domain: regras de negócio onde elas devem ficar
+Regras travadas do MVP
+Você definiu:
+cashback 3% a 10%
+pontos só após aprovação
+ledger com eventos: earn, burn, reversal
+idempotência obrigatória
+logs de auditoria
+✅ Isso entra no domain + Cloud Functions (backend).
+
+Exemplo de entidades (domain):
+UserProfile
+PartnerStore
+Purchase
+LedgerEntry
+RewardItem
+Voucher
+Enums:
+PurchaseStatus = pending | approved | rejected
+LedgerType = earn | burn | reversal
+
+6) Data Layer: Firebase sem “vazar” para UI
+Repositories (contratos no domain)
+AuthRepository
+StoresRepository
+PurchasesRepository
+LedgerRepository
+RewardsRepository
+VouchersRepository
+AdminRepository
+Implementações (no data)
+FirestorePurchasesRepository
+FirestoreLedgerRepository
+FirestoreStoresRepository
+StorageInvoicesRepository
+FunctionsAdminRepository
+A UI nunca chama Firestore direto.
+A UI chama use cases → repos → Firebase.
+
+7) Fluxo crítico “Registrar compra” (como modelar)
+Firestore (mínimo e seguro)
+purchases/{purchaseId}
+userId
+storeId
+amount
+date
+proofPath (path no storage)
+status (pending|approved|rejected)
+cashbackPercentSnapshot
+pointsExpected (opcional, antes da aprovação)
+pointsApproved (depois)
+rejectionReason (se houver)
+createdAt
+reviewedAt
+reviewedBy (adminId)
+ledger/{entryId}
+userId
+type (earn|burn|reversal)
+points
+purchaseId (quando aplicável)
+rewardId (quando aplicável)
+idempotencyKey
+createdAt
+createdBy (admin/system)
+wallets/{userId}
+balance
+pending
+updatedAt
+O saldo deve ser derivável do ledger. O wallets é cache para performance.
+
+8) Por que “ledger + idempotência” muda o jogo
+Sem ledger, uma falha simples pode:
+creditar pontos duas vezes
+permitir resgate duplicado
+bagunçar saldo sem rastro
+Com ledger:
+tudo é auditável
+reversão é fácil
+idempotência trava duplicações
+
+9) Cloud Functions (mínimo indispensável no MVP)
+Funções recomendadas
+purchaseCreate
+valida campos
+cria compra como pending
+grava expiresAt do comprovante (se você adotar retenção)
+purchaseApprove(purchaseId)
+calcula pontos (com % snapshot)
+cria ledger earn com idempotencyKey
+atualiza purchase.status=approved
+purchaseReject(purchaseId, reason)
+reason obrigatório
+status rejected
+rewardRedeem(rewardId)
+verifica saldo
+cria ledger burn
+gera voucher único (e impede duplicar)
+cleanupProofs (agendada)
+apaga comprovantes vencidos do Storage
+
+10) UI / telas: como organizar e evitar “monstrão”
+Cada feature com rotas próprias
+Exemplo features/purchases/presentation/:
+
+presentation/
+  pages/
+    purchase_create_page.dart
+    purchase_confirm_page.dart
+    purchase_detail_page.dart
+  widgets/
+    purchase_form_widget.dart
+    proof_picker_widget.dart
+    status_badge_widget.dart
+  controllers/
+    purchase_create_controller.dart
+    purchase_detail_controller.dart
+
+Padrão de estado
+AsyncValue (Riverpod)
+estados de formulário com StateNotifier/Notifier
+
+11) Router profissional (go_router)
+Rotas com guard:
+se não logado → auth
+se logado e role=admin → libera admin
+se role=partner → libera portal parceiro
+user comum → app
+Isso evita:
+tela admin abrindo no celular de qualquer um
+parceiro vendo compra de outro parceiro
+
+12) Apps Web (Admin e Parceiro): como entregar bem
+Você tem 2 abordagens:
+A) Um único app com rotas e roles (mais rápido)
+mesma base
+menus mudam por role
+build web única
+B) 2 builds diferentes (mais profissional)
+main_admin.dart
+main_partner.dart
+main_app.dart
+cada um com router próprio e tema próprio
+sso fica excelente para deploy separado.
+
+13) Checklist de profissionalismo (que te poupa meses)
+analysis_options.yaml com lints fortes
+freezed e json_serializable para tudo
+Result/Failure padronizado (sem try/catch espalhado)
+logs estruturados (principalmente nas Functions)
+paginação e índices no Firestore desde cedo
+uploads sempre comprimidos + limite de tamanho

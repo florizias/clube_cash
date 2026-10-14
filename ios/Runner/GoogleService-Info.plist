@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>69239510804-h79o24qgo5gbvvun33jc3drk62832g9j.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.69239510804-h79o24qgo5gbvvun33jc3drk62832g9j</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>69239510804-sh5hl8demf4temfrtr1stprjaikj8in1.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyBTii4tVZUeU4Rr-AJ5THLarb5iE9xuWsc</string>
+	<key>GCM_SENDER_ID</key>
+	<string>69239510804</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>br.com.conever.clubcash</string>
+	<key>PROJECT_ID</key>
+	<string>appclubcash</string>
+	<key>STORAGE_BUCKET</key>
+	<string>appclubcash.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:69239510804:ios:a9a158fab15950af48d401</string>
+</dict>
+</plist>

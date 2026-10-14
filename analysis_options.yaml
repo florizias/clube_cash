@@ -1,0 +1,15 @@
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    always_declare_return_types: true
+    avoid_print: true
+    prefer_final_locals: true
+    unawaited_futures: true
+
+analyzer:
+  errors:
+    missing_required_param: error
+    missing_return: error
+    dead_code: warning
+    unused_import: warning

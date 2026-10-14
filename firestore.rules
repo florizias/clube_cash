@@ -1,0 +1,154 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function userDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid));
+    }
+
+    function currentUserDoc() {
+      return userDoc(request.auth.uid);
+    }
+
+    function currentRole() {
+      return signedIn() && currentUserDoc().exists()
+        ? currentUserDoc().data.role
+        : null;
+    }
+
+    function currentStatus() {
+      return signedIn() && currentUserDoc().exists()
+        ? currentUserDoc().data.status
+        : null;
+    }
+
+    function isAdmin() {
+      return signedIn() &&
+        currentRole() == 'admin' &&
+        currentStatus() == 'active';
+    }
+
+    function isPartner() {
+      return signedIn() &&
+        currentRole() == 'partner' &&
+        currentStatus() == 'active';
+    }
+
+    function isCustomer() {
+      return signedIn() &&
+        currentRole() == 'customer' &&
+        currentStatus() == 'active';
+    }
+
+    // USERS
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+
+      allow create: if isOwner(uid);
+
+      allow update: if isOwner(uid) || isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+    // SOLICITAÇÕES DE PARCERIA
+    match /store_requests/{uid} {
+      allow create: if isOwner(uid);
+
+      allow read: if isOwner(uid) || isAdmin();
+
+      allow update: if isOwner(uid) || isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+    // LOJAS PARCEIRAS
+    match /partners/{partnerId} {
+      allow read: if true;
+
+      allow create: if isAdmin();
+
+      allow update: if isAdmin() || isOwner(partnerId);
+
+      allow delete: if isAdmin();
+    }
+
+    // BANNERS / ANÚNCIOS
+    match /ads_banners/{bannerId} {
+      allow read: if true;
+
+      allow create, update, delete: if isAdmin();
+    }
+
+    // SOLICITAÇÕES DE COMPRA / COMPROVANTES
+    match /purchase_requests/{requestId} {
+      allow read: if signedIn()
+        && (
+          resource.data.partnerId == request.auth.uid ||
+          resource.data.customerId == request.auth.uid ||
+          resource.data.userId == request.auth.uid
+        );
+
+      allow create: if isCustomer()
+        && (
+          request.resource.data.customerId == request.auth.uid ||
+          request.resource.data.userId == request.auth.uid
+        );
+
+      allow update: if isAdmin()
+        || (
+          signedIn()
+          && resource.data.partnerId == request.auth.uid
+        );
+
+      allow delete: if isAdmin();
+    }
+
+    // CARTEIRA DO CLIENTE
+    match /customer_wallets/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+
+      allow create, update: if isOwner(uid)
+        || isAdmin()
+        || (
+          isPartner()
+          && request.resource.data.lastPurchaseRequestId is string
+          && exists(/databases/$(database)/documents/purchase_requests/$(request.resource.data.lastPurchaseRequestId))
+          && get(/databases/$(database)/documents/purchase_requests/$(request.resource.data.lastPurchaseRequestId)).data.partnerId == request.auth.uid
+          && get(/databases/$(database)/documents/purchase_requests/$(request.resource.data.lastPurchaseRequestId)).data.customerId == uid
+        );
+
+      allow delete: if isAdmin();
+
+      match /ledger/{movementId} {
+        allow read: if isOwner(uid) || isAdmin();
+
+        allow create: if isOwner(uid)
+          || isAdmin()
+          || (
+            isPartner()
+            && request.resource.data.purchaseRequestId == movementId
+            && exists(/databases/$(database)/documents/purchase_requests/$(movementId))
+            && get(/databases/$(database)/documents/purchase_requests/$(movementId)).data.partnerId == request.auth.uid
+            && get(/databases/$(database)/documents/purchase_requests/$(movementId)).data.customerId == uid
+          );
+
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    // BLOQUEIA O RESTANTE
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

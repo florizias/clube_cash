@@ -1,0 +1,90 @@
+{
+  "project_info": {
+    "project_number": "69239510804",
+    "project_id": "appclubcash",
+    "storage_bucket": "appclubcash.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:69239510804:android:5c9522905be9e75948d401",
+        "android_client_info": {
+          "package_name": "br.com.conever.clubcash"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "69239510804-a0orckddifofooeaqs6f1656b6nkvbp3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCdScryg3H2PZFHahR1kNffdhmy1_r5oMg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "69239510804-a0orckddifofooeaqs6f1656b6nkvbp3.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "69239510804-h79o24qgo5gbvvun33jc3drk62832g9j.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "br.com.conever.clubcash"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:69239510804:android:51a65c9ce6cd7f1a48d401",
+        "android_client_info": {
+          "package_name": "br.com.conever.clubcash"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "69239510804-sh5hl8demf4temfrtr1stprjaikj8in1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "br.com.conever.clubcash",
+            "certificate_hash": "211f10ee747fd879da23ff3c6a3224ae1eafce16"
+          }
+        },
+        {
+          "client_id": "69239510804-a0orckddifofooeaqs6f1656b6nkvbp3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCdScryg3H2PZFHahR1kNffdhmy1_r5oMg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "69239510804-a0orckddifofooeaqs6f1656b6nkvbp3.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "69239510804-h79o24qgo5gbvvun33jc3drk62832g9j.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "br.com.conever.clubcash"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

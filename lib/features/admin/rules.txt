@@ -1,0 +1,76 @@
+5. Rules do Firestore
+
+No Firestore Rules, use algo assim:
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    match /ads_banners/{bannerId} {
+      allow get, list: if resource.data.isActive == true || isAdmin();
+
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn()
+        && request.auth.uid == userId
+        && !('role' in request.resource.data.diff(resource.data).changedKeys())
+        && !('status' in request.resource.data.diff(resource.data).changedKeys());
+
+      allow delete: if false;
+    }
+
+    match /store_requests/{requestId} {
+      allow create: if isSignedIn();
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /partners/{partnerId} {
+      allow read: if resource.data.status == 'active' || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}
+
+Essa regra usa o documento users/{uid} para saber se o usuário é admin. Uma alternativa ainda mais forte é usar custom claims (request.auth.token.admin == true), que o Firebase documenta como estratégia para controle de acesso por roles.
+
+6. Rules do Storage
+
+Para as imagens dos banners:
+
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    match /ads_banners/{fileName} {
+      allow read: if true;
+
+      allow write: if isAdmin()
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+  }
+}
+
+O Firebase Storage Rules permite validar usuário autenticado, tamanho do arquivo e contentType, o que é ideal para impedir upload indevido fora de imagens.

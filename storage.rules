@@ -1,0 +1,110 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function userDoc(uid) {
+      return firestore.get(/databases/(default)/documents/users/$(uid));
+    }
+
+    function currentUserDoc() {
+      return userDoc(request.auth.uid);
+    }
+
+    function currentRole() {
+      return signedIn() && currentUserDoc().exists()
+        ? currentUserDoc().data.role
+        : null;
+    }
+
+    function currentStatus() {
+      return signedIn() && currentUserDoc().exists()
+        ? currentUserDoc().data.status
+        : null;
+    }
+
+    function isAdmin() {
+      return signedIn() &&
+        currentRole() == 'admin' &&
+        currentStatus() == 'active';
+    }
+
+    function isPartner() {
+      return signedIn() &&
+        currentRole() == 'partner' &&
+        currentStatus() == 'active';
+    }
+
+    function isCustomer() {
+      return signedIn() &&
+        currentRole() == 'customer' &&
+        currentStatus() == 'active';
+    }
+
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    function isWebp() {
+      return request.resource.contentType == 'image/webp';
+    }
+
+    function isUnder5MB() {
+      return request.resource.size < 5 * 1024 * 1024;
+    }
+
+    // FOTO DE PERFIL DO USUÁRIO
+    match /users/{uid}/profile/{fileName} {
+      allow read: if true;
+
+      allow create, update: if isOwner(uid)
+        && isImage()
+        && isUnder5MB();
+
+      allow delete: if isOwner(uid) || isAdmin();
+    }
+
+    // LOGO E CAPA DO PARCEIRO
+    match /partners/{partnerId}/{fileName} {
+      allow read: if true;
+
+      allow create, update: if (isOwner(partnerId) && isPartner()) || isAdmin();
+
+      allow delete: if (isOwner(partnerId) && isPartner()) || isAdmin();
+    }
+
+    // COMPROVANTES DE COMPRA
+    match /purchase_receipts/{uid}/{fileName} {
+      allow read: if isOwner(uid) || isAdmin();
+
+      allow create: if isOwner(uid)
+        && isCustomer()
+        && isImage()
+        && isUnder5MB();
+
+      allow update: if false;
+
+      allow delete: if isOwner(uid) || isAdmin();
+    }
+
+    // BANNERS DO ADMIN
+    match /ads_banners/{fileName} {
+      allow read: if true;
+
+      allow create, update, delete: if isAdmin();
+    }
+
+    // BLOQUEIA O RESTANTE
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

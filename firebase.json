@@ -1,0 +1,65 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "appclubcash",
+          "appId": "1:69239510804:android:51a65c9ce6cd7f1a48d401",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "appclubcash",
+          "configurations": {
+            "android": "1:69239510804:android:51a65c9ce6cd7f1a48d401",
+            "ios": "1:69239510804:ios:a9a158fab15950af48d401",
+            "macos": "1:69239510804:ios:a9a158fab15950af48d401",
+            "web": "1:69239510804:web:df25dc64cc04a28348d401",
+            "windows": "1:69239510804:web:9c344ee4f9f5cfb948d401"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "firestore": {
+    "database": "(default)",
+    "location": "southamerica-east1",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "disallowLegacyRuntimeConfig": true,
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run lint"
+      ]
+    }
+  ],
+  "storage": {
+    "rules": "storage.rules"
+  }
+}
